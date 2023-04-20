@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import SearchBar from './components/SearchBar';
@@ -8,14 +8,33 @@ import { SearchContext } from './contexts/SearchContext';
 import ArtistView from './components/ArtistView';
 import AlbumView from './components/AlbumView';
 
+import { createResource as fetchData } from './helper';
+import Spinner from './contexts/Spinner'
+
 import './App.css';
 
 function App() {
 
   let [message, setMessage] = useState('Search for Music!!');
-  let [data, setData] = useState([]);
+  let [data, setData] = useState(null);
   let searchInput = useRef('')
+  // ==================Need Corrections====================
+  useEffect(() => {
+    if (searchTerm) {
+      setData (fetchData (serchTerm))
+    }
+  },[searchTerm])
 
+  const renderGallery = () => {
+    if (data) {
+      return (
+        <Suspense fallback={<h1>Loading ...</h1>}>
+          <gallery data={data}/>
+        </Suspense>
+      )
+    }
+  }
+  //=======================================================
   const handleSearch = async searchTerm => {
     if (!searchTerm) return
     document.title = `${searchTerm} Music`;
@@ -27,12 +46,12 @@ function App() {
       setData([]);
       setMessage("Nothing found for that artist")
     }
-
     console.log(resData)
   }
 
   return (
     <div className="App">
+
       {message}
       <Router>
         <Routes>
@@ -45,6 +64,10 @@ function App() {
                 }
               }>
                 <SearchBar />
+                <Suspense fallback = {<Spinner/>}>
+                  <Gallery data ={data}/>
+                </Suspense>
+                
               </SearchContext.Provider>
 
               <DataContext.Provider value={
